@@ -45,6 +45,16 @@ export const loadLocalGatewayDefaults = () => {
   return readOpenclawGatewayDefaults();
 };
 
+export const loadEnvGatewayDefaults = (): { url: string; token: string } | null => {
+  const url = process.env.OPENCLAW_GATEWAY_URL?.trim() ?? "";
+  const token = process.env.OPENCLAW_GATEWAY_TOKEN?.trim() ?? "";
+  if (!url || !token) return null;
+  return { url, token };
+};
+
+const resolveGatewayDefaults = (): { url: string; token: string } | null =>
+  loadEnvGatewayDefaults() ?? loadLocalGatewayDefaults();
+
 export const redactStudioSettingsSecrets = (settings: StudioSettings): StudioSettings => {
   if (!settings.gateway) return settings;
   return {
@@ -70,14 +80,14 @@ export const loadStudioSettings = (): StudioSettings => {
   const settingsPath = resolveStudioSettingsPath();
   if (!fs.existsSync(settingsPath)) {
     const defaults = defaultStudioSettings();
-    const gateway = loadLocalGatewayDefaults();
+    const gateway = resolveGatewayDefaults();
     return gateway ? { ...defaults, gateway } : defaults;
   }
   const raw = fs.readFileSync(settingsPath, "utf8");
   const parsed = JSON.parse(raw) as unknown;
   const settings = normalizeStudioSettings(parsed);
   if (!settings.gateway?.token) {
-    const gateway = loadLocalGatewayDefaults();
+    const gateway = resolveGatewayDefaults();
     if (gateway) {
       return {
         ...settings,
