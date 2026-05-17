@@ -14,6 +14,28 @@ k3s cluster.
 wins. The design spec and implementation plan for the fork work are in
 `docs/superpowers/`.
 
+## Background — why this fork exists (read this first)
+
+OpenClaw is two separate components: the **Gateway** (the runtime/orchestrator) and
+**Studio** (this web dashboard). They are released and versioned independently.
+
+The AirCompEx platform runs OpenClaw Gateway `2026.5.x`, whose control-plane protocol is
+**v4**. The upstream community package `grp06/openclaw-studio` only speaks protocol **v3**
+and is effectively dormant (no v4 work, no recent releases). Result: the published
+`openclaw-studio` could not connect to the platform's Gateway *at all* — every attempt was
+rejected with `protocol mismatch`. There was no newer version to install and no upstream
+fix coming, so **forking was the only way to get a working Studio**.
+
+Forking Studio — rather than just using the Gateway's own built-in "Control UI" — is
+deliberate: the long-term goal is a **multi-tenant SaaS built on Studio**. This fork is
+*sub-project #1* of that effort: get Studio connecting to a v4 Gateway and shipped as a
+real, pinned image. Real customer auth, multi-tenancy, and billing are explicitly
+**later, separate sub-projects** — they are not in this fork yet.
+
+The complete problem statement, options considered, decisions, and trade-offs are in
+`docs/superpowers/specs/2026-05-17-openclaw-studio-v4-fork-design.md`; the task-by-task
+implementation record is the sibling `plans/` file.
+
 ## Fork-specific changes vs upstream
 
 The platform runs OpenClaw Gateway `2026.5.x`, whose control-plane protocol is **v4**.
