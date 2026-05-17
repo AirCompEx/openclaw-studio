@@ -38,9 +38,12 @@
 
 - [ ] **Step 1: Create the branch**
 
+Branch from `spec/v4-fork-design` (not `main`) so the spec and this plan file travel with
+the implementation branch — the executing skill tracks task checkboxes in the plan file.
+
 ```bash
 cd /c/Dev/AIRCOMPEX/openclaw-studio
-git checkout main && git checkout -b feat/v4-protocol
+git checkout spec/v4-fork-design && git checkout -b feat/v4-protocol
 ```
 
 - [ ] **Step 2: Write the failing test**
@@ -192,20 +195,24 @@ Create `tests/unit/settingsStoreEnvDefaults.test.ts`:
 // @vitest-environment node
 
 import { afterEach, describe, expect, it } from "vitest";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
-import { loadEnvGatewayDefaults } from "@/lib/studio/settings-store";
+import { loadEnvGatewayDefaults, loadStudioSettings } from "@/lib/studio/settings-store";
 
-describe("loadEnvGatewayDefaults", () => {
+describe("settings-store env seeding", () => {
   afterEach(() => {
     delete process.env.OPENCLAW_GATEWAY_URL;
     delete process.env.OPENCLAW_GATEWAY_TOKEN;
+    delete process.env.OPENCLAW_STATE_DIR;
   });
 
-  it("returns null when no env vars are set", () => {
+  it("loadEnvGatewayDefaults returns null when no env vars are set", () => {
     expect(loadEnvGatewayDefaults()).toBeNull();
   });
 
-  it("returns url and token when both env vars are set", () => {
+  it("loadEnvGatewayDefaults returns url and token when both env vars are set", () => {
     process.env.OPENCLAW_GATEWAY_URL = "ws://openclaw-gateway:18789";
     process.env.OPENCLAW_GATEWAY_TOKEN = "tkn";
     expect(loadEnvGatewayDefaults()).toEqual({
@@ -214,14 +221,25 @@ describe("loadEnvGatewayDefaults", () => {
     });
   });
 
-  it("returns null when only the URL is set", () => {
+  it("loadEnvGatewayDefaults returns null when only the URL is set", () => {
     process.env.OPENCLAW_GATEWAY_URL = "ws://openclaw-gateway:18789";
     expect(loadEnvGatewayDefaults()).toBeNull();
   });
 
-  it("returns null when only the token is set", () => {
+  it("loadEnvGatewayDefaults returns null when only the token is set", () => {
     process.env.OPENCLAW_GATEWAY_TOKEN = "tkn";
     expect(loadEnvGatewayDefaults()).toBeNull();
+  });
+
+  it("loadStudioSettings uses env defaults when no settings.json exists", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "studio-settings-"));
+    process.env.OPENCLAW_STATE_DIR = tmpDir;
+    process.env.OPENCLAW_GATEWAY_URL = "ws://openclaw-gateway:18789";
+    process.env.OPENCLAW_GATEWAY_TOKEN = "tkn";
+    expect(loadStudioSettings().gateway).toEqual({
+      url: "ws://openclaw-gateway:18789",
+      token: "tkn",
+    });
   });
 });
 ```
@@ -233,7 +251,8 @@ Expected: FAIL — `loadEnvGatewayDefaults` is not exported / not a function.
 
 - [ ] **Step 3: Implement `loadEnvGatewayDefaults` and weave it into `loadStudioSettings`**
 
-In `src/lib/studio/settings-store.ts`, add this exported function next to `loadLocalGatewayDefaults` (after the `readOpenclawGatewayDefaults` definition):
+In `src/lib/studio/settings-store.ts`, add these two functions immediately **after** the
+existing `loadLocalGatewayDefaults` export (so both are defined before `loadStudioSettings`, which uses `resolveGatewayDefaults`):
 
 ```ts
 export const loadEnvGatewayDefaults = (): { url: string; token: string } | null => {
@@ -281,12 +300,12 @@ This gives the precedence: UI-saved `settings.json` → env vars → co-located 
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `npm test -- settingsStoreEnvDefaults`
-Expected: PASS — all 4 cases green.
+Expected: PASS — all 5 cases green.
 
 - [ ] **Step 5: Run typecheck and the full unit suite**
 
-Run: `npm run build` (Next.js typechecks during build) then `npm test`
-Expected: build succeeds; all tests pass.
+Run: `npm run typecheck` then `npm test`
+Expected: `tsc --noEmit` reports no errors; all Vitest suites pass.
 
 - [ ] **Step 6: Commit**
 
@@ -321,7 +340,9 @@ docs
 ```dockerfile
 # syntax=docker/dockerfile:1
 
-FROM node:20-bookworm-slim AS build
+# Build stage uses the FULL bookworm image: it has python3/make/g++ so the
+# better-sqlite3 native module can compile if no prebuilt binary is available.
+FROM node:20-bookworm AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
@@ -335,11 +356,18 @@ COPY --from=build /app/package.json /app/package-lock.json ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/.next ./.next
 COPY --from=build /app/server ./server
+COPY --from=build /app/scripts ./scripts
 COPY --from=build /app/public ./public
 COPY --from=build /app/next.config.ts ./next.config.ts
 EXPOSE 3000
 CMD ["node", "server/index.js"]
 ```
+
+`node:20-bookworm` (build) and `node:20-bookworm-slim` (runtime) share the same Node
+version and glibc, so a native module compiled in the build stage loads in the runtime
+stage. `scripts/` is copied because `server/index.js` resolves
+`scripts/verify-native-runtime.mjs` (it only skips it when
+`OPENCLAW_SKIP_NATIVE_RUNTIME_VERIFY=1`).
 
 - [ ] **Step 3: Build the image locally to verify**
 
@@ -350,10 +378,15 @@ Expected: build completes; final image created.
 
 Run:
 ```bash
-docker run --rm -e HOST=127.0.0.1 -e PORT=3000 -p 3000:3000 openclaw-studio:dev &
-sleep 8 && curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:3000/ ; docker stop $(docker ps -q --filter ancestor=openclaw-studio:dev)
+docker run --rm -d --name studio-smoke \
+  -e HOST=127.0.0.1 -e PORT=3000 -e OPENCLAW_SKIP_NATIVE_RUNTIME_VERIFY=1 \
+  -p 3000:3000 openclaw-studio:dev
+sleep 8 && curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:3000/
+docker stop studio-smoke
 ```
-Expected: prints `200`. (Bind to `127.0.0.1` so `network-policy.js` does not require `STUDIO_ACCESS_TOKEN` for this smoke test.)
+Expected: prints `200`. Notes: bind to `127.0.0.1` so `network-policy.js` does not require
+`STUDIO_ACCESS_TOKEN`; `OPENCLAW_SKIP_NATIVE_RUNTIME_VERIFY=1` mirrors the production
+deployment.
 
 - [ ] **Step 5: Commit**
 
@@ -417,8 +450,9 @@ jobs:
 
 - [ ] **Step 2: Validate YAML syntax**
 
-Run: `node -e "require('js-yaml')" 2>/dev/null && npx --yes js-yaml .github/workflows/docker-image.yml >/dev/null && echo OK || python -c "import yaml,sys; yaml.safe_load(open('.github/workflows/docker-image.yml')); print('OK')"`
-Expected: prints `OK`.
+Run: `python3 -c "import yaml; yaml.safe_load(open('.github/workflows/docker-image.yml')); print('OK')"`
+Expected: prints `OK`. (If `python3`/`pyyaml` is unavailable, instead confirm the file
+parses in a YAML-aware editor — GitHub also validates the workflow on push.)
 
 - [ ] **Step 3: Commit**
 
@@ -512,9 +546,16 @@ data:
   PORT: "3000"
   OPENCLAW_GATEWAY_URL: ws://openclaw-gateway:18789
   OPENCLAW_STATE_DIR: /home/node/.openclaw
+  OPENCLAW_SKIP_NATIVE_RUNTIME_VERIFY: "1"
 ```
 
-`NEXT_PUBLIC_GATEWAY_URL` and `OPENCLAW_SKIP_NATIVE_RUNTIME_VERIFY` are removed (no longer used). `STUDIO_ACCESS_TOKEN` and `OPENCLAW_GATEWAY_TOKEN` continue to arrive via `openclaw-studio-secrets` (`envFrom`).
+`NEXT_PUBLIC_GATEWAY_URL` is removed (the browser never connects to the Gateway).
+`OPENCLAW_SKIP_NATIVE_RUNTIME_VERIFY: "1"` is **kept**: `server/index.js:21,37` runs a
+`better-sqlite3` native-ABI verify on every start, and on a detected mismatch it attempts
+`npm rebuild` — which would fail in the minimal runtime image. The Docker build already
+compiles `better-sqlite3` against the matching `node:20-bookworm-slim` base, so the
+runtime re-verify is correctly skipped. `STUDIO_ACCESS_TOKEN` and `OPENCLAW_GATEWAY_TOKEN`
+continue to arrive via `openclaw-studio-secrets` (`envFrom`).
 
 - [ ] **Step 4: Delete the per-overlay studio-configmap patches**
 
@@ -682,6 +723,8 @@ PVCs:
         - name: bootstrap-config
           image: ghcr.io/openclaw/openclaw:latest
           imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 0
           command:
             - sh
             - -c
@@ -702,6 +745,10 @@ PVCs:
               mountPath: /bootstrap
               readOnly: true
 ```
+
+`securityContext.runAsUser: 0` is required so the `chown` succeeds — the gateway image's
+default user is non-root, and files written by `cp`/`config set` must end up owned by
+uid 1000 (the user the gateway container runs as, per the pod's `fsGroup: 1000`).
 
 `config set` writes the key atomically and idempotently — fresh PVCs get the full
 bootstrap via `cp`; existing PVCs get `gateway.auth.mode` reconciled in place.
@@ -751,9 +798,11 @@ Append two entries:
 
 - [ ] **Step 3: Update `catalog/runtimes/openclaw.yaml`**
 
-Under `technical_ref`, change `public_entrypoint` to reference the Studio component only.
-In `notes`, state that the Gateway has no public endpoint and Studio is the public
-surface.
+`technical_ref.public_entrypoint` already points at the `studio` component — leave it.
+Update the `notes:` list: state that the Gateway has **no public endpoint** (it is a
+cluster-internal `ClusterIP` service with `auth.mode: none`) and that OpenClaw Studio is
+the sole public surface. The `gateway` component entry keeps its service `ports` (the
+internal service still exposes them).
 
 - [ ] **Step 4: Update the RuntimeInstance files**
 
