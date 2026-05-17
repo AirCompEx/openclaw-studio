@@ -6,3 +6,6 @@ tests
 docs
 *.md
 .github
+.env
+.env.*
+.npmrc
