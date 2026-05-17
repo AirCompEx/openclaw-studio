@@ -7,11 +7,21 @@ import path from "node:path";
 
 import { loadEnvGatewayDefaults, loadStudioSettings } from "@/lib/studio/settings-store";
 
+const tmpDirs: string[] = [];
+const makeTmpDir = () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "studio-settings-"));
+  tmpDirs.push(dir);
+  return dir;
+};
+
 describe("settings-store env seeding", () => {
   afterEach(() => {
     delete process.env.OPENCLAW_GATEWAY_URL;
     delete process.env.OPENCLAW_GATEWAY_TOKEN;
     delete process.env.OPENCLAW_STATE_DIR;
+    while (tmpDirs.length) {
+      try { fs.rmSync(tmpDirs.pop()!, { recursive: true, force: true }); } catch { /* ignore */ }
+    }
   });
 
   it("loadEnvGatewayDefaults returns null when no env vars are set", () => {
@@ -38,13 +48,33 @@ describe("settings-store env seeding", () => {
   });
 
   it("loadStudioSettings uses env defaults when no settings.json exists", () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "studio-settings-"));
+    const tmpDir = makeTmpDir();
     process.env.OPENCLAW_STATE_DIR = tmpDir;
     process.env.OPENCLAW_GATEWAY_URL = "ws://openclaw-gateway:18789";
     process.env.OPENCLAW_GATEWAY_TOKEN = "tkn";
     expect(loadStudioSettings().gateway).toEqual({
       url: "ws://openclaw-gateway:18789",
       token: "tkn",
+    });
+  });
+
+  it("loadStudioSettings uses env token but keeps settings.json url when gateway has no token", () => {
+    const tmpDir = makeTmpDir();
+    process.env.OPENCLAW_STATE_DIR = tmpDir;
+    process.env.OPENCLAW_GATEWAY_URL = "ws://from-env:18789";
+    process.env.OPENCLAW_GATEWAY_TOKEN = "env-token";
+
+    const settingsDir = path.join(tmpDir, "openclaw-studio");
+    fs.mkdirSync(settingsDir, { recursive: true });
+    const settingsContent = JSON.stringify({
+      version: 1,
+      gateway: { url: "ws://from-settings:18789", token: "" },
+    });
+    fs.writeFileSync(path.join(settingsDir, "settings.json"), settingsContent, "utf8");
+
+    expect(loadStudioSettings().gateway).toEqual({
+      url: "ws://from-settings:18789",
+      token: "env-token",
     });
   });
 });
