@@ -447,6 +447,65 @@ describe("OpenClawGatewayAdapter", () => {
     await adapter.stop();
   });
 
+  it("declares protocol v4 in the connect frame", async () => {
+    const sentFrames: Array<{ method?: string; params?: Record<string, unknown> }> = [];
+
+    class RecordingSocket extends EventEmitter {
+      readyState: number = WebSocket.OPEN;
+      close() {
+        if (this.readyState === WebSocket.CLOSED) return;
+        this.readyState = WebSocket.CLOSED;
+        this.emit("close");
+      }
+      terminate() {
+        this.close();
+      }
+      send(raw: string, callback?: (err?: Error) => void) {
+        const parsed = JSON.parse(raw) as {
+          id?: string;
+          method?: string;
+          params?: Record<string, unknown>;
+        };
+        sentFrames.push(parsed);
+        callback?.();
+        if (parsed.method === "connect" && parsed.id) {
+          queueMicrotask(() => {
+            this.emit(
+              "message",
+              JSON.stringify({
+                type: "res",
+                id: parsed.id,
+                ok: true,
+                payload: { type: "hello-ok", protocol: 4 },
+              })
+            );
+          });
+        }
+      }
+    }
+
+    const socket = new RecordingSocket();
+    const adapter = new OpenClawGatewayAdapter({
+      loadSettings: () => ({ url: "ws://127.0.0.1:9", token: "tkn" }),
+      createWebSocket: () => socket as unknown as WebSocket,
+    });
+
+    queueMicrotask(() => {
+      socket.emit(
+        "message",
+        JSON.stringify({ type: "event", event: "connect.challenge", payload: {} })
+      );
+    });
+
+    await adapter.start();
+
+    const connectFrame = sentFrames.find((f) => f.method === "connect");
+    expect(connectFrame?.params?.minProtocol).toBe(4);
+    expect(connectFrame?.params?.maxProtocol).toBe(4);
+
+    await adapter.stop();
+  });
+
   it("resets the connect profile to backend-local after an explicit stop", async () => {
     upstream = new WebSocketServer({ port: 0 });
     const address = upstream.address();
