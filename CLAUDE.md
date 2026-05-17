@@ -55,6 +55,18 @@ browser-facing one — there is no `NEXT_PUBLIC_` gateway URL.
 - `server/index.js` runs a `better-sqlite3` native-ABI check at startup unless
   `OPENCLAW_SKIP_NATIVE_RUNTIME_VERIFY=1` is set (the production deployment sets it).
 
+## Required GitHub Actions secrets
+
+Set in **this repo's** Settings → Secrets and variables → Actions, for `docker-build.yml`:
+
+| Secret | Value |
+|---|---|
+| `DOCKER_HUB_USERNAME` | `systemease` (the Docker Hub account; also forms the image name `systemease/openclaw-studio`). |
+| `DOCKER_HUB_ACCESS_TOKEN` | A Docker Hub **personal access token** with Read & Write scope (hub.docker.com → Account settings → Personal access tokens) — not the account password. |
+
+The runtime/deploy secrets (`OPENCLAW_GATEWAY_TOKEN_*`, `OPENCLAW_STUDIO_ACCESS_TOKEN_*`)
+live in the separate `agents-platform` repo, not here.
+
 ## Deployment
 
 Deployed by the separate `agents-platform` repo as the OpenClaw runtime's `studio`
