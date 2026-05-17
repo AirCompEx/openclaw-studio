@@ -32,8 +32,10 @@ The fork's deltas:
   `openclaw-adapter.ts` throws if URL or token is empty, so both env vars must be set.
 - **`Dockerfile` + `.dockerignore`** — a pinned production image (multi-stage: build on
   `node:20-bookworm` so the `better-sqlite3` native module can compile, runtime on
-  `node:20-bookworm-slim`). `.github/workflows/docker-image.yml` builds and pushes
-  `ghcr.io/aircompex/openclaw-studio` to GHCR on `v*` tags.
+  `node:20-bookworm-slim`). `.github/workflows/docker-build.yml` builds and pushes the
+  image to **Docker Hub** as `systemease/openclaw-studio` (login via the
+  `DOCKER_HUB_USERNAME` / `DOCKER_HUB_ACCESS_TOKEN` repo secrets), on pushes to the
+  default branch and on `v*` tags — matching the `aircompex` repo's workflow convention.
 
 ## Architecture note that matters
 

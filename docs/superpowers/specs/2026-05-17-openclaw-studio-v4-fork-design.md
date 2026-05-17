@@ -135,7 +135,7 @@ single-tenant. Relaxing the `loadGatewaySettings` empty-token check is deferred 
   mode.
 - Image tag = `<package.json version>-<git short SHA>` (e.g. `0.1.0-ab12cd3`); also push a
   moving `latest` for convenience. Overlays pin the exact `version-sha` tag.
-- Registry: `ghcr.io/aircompex/openclaw-studio` (default; overridable by ops).
+- Registry: `systemease/openclaw-studio` (default; overridable by ops).
 - Build/push: a GitHub Actions workflow in the fork repo builds and pushes on a git tag.
   The first image may be built and pushed manually (`docker build` / `docker push`) to
   unblock verification; the workflow is part of this sub-project's deliverables.
@@ -162,7 +162,7 @@ sufficient; `OPENCLAW_STATE_DIR` may be kept or dropped (harmless either way). P
 image tag in both overlays' `images:` block.
 
 **Image pull access:** the k3s cluster must be able to pull the image. Either publish
-`ghcr.io/aircompex/openclaw-studio` as a public package, or create an `imagePullSecret`
+`systemease/openclaw-studio` as a public package, or create an `imagePullSecret`
 in the `prd-openclaw`/`hprd-openclaw` namespaces and reference it from the Studio
 Deployment (the deploy workflow would create the secret alongside the existing ones).
 Public is simplest for a single-tenant prototype and is the assumed default.

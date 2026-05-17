@@ -444,8 +444,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/aircompex/openclaw-studio:${{ steps.tag.outputs.tag }}
-            ghcr.io/aircompex/openclaw-studio:latest
+            systemease/openclaw-studio:${{ steps.tag.outputs.tag }}
+            systemease/openclaw-studio:latest
 ```
 
 - [ ] **Step 2: Validate YAML syntax**
@@ -465,8 +465,8 @@ git commit -m "ci: build and push studio image to GHCR on tag"
 
 Run (operator must be logged in to GHCR — `docker login ghcr.io`):
 ```bash
-docker build -t ghcr.io/aircompex/openclaw-studio:0.1.0-local .
-docker push ghcr.io/aircompex/openclaw-studio:0.1.0-local
+docker build -t systemease/openclaw-studio:0.1.0-local .
+docker push systemease/openclaw-studio:0.1.0-local
 ```
 Expected: push succeeds. Note: make the GHCR package **public**, or arrange an `imagePullSecret` (see Task 6). Record the exact pushed tag — it is used in Task 6.
 
@@ -496,7 +496,7 @@ Replace the `containers:` entry so it reads exactly:
 ```yaml
       containers:
         - name: studio
-          image: ghcr.io/aircompex/openclaw-studio:0.1.0-local
+          image: systemease/openclaw-studio:0.1.0-local
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -577,8 +577,8 @@ In **both** `overlays/hprd/kustomization.yaml` and `overlays/prd/kustomization.y
 In **both** overlays' `kustomization.yaml`, replace the `node` entry in the `images:` block with:
 
 ```yaml
-  - name: ghcr.io/aircompex/openclaw-studio
-    newName: ghcr.io/aircompex/openclaw-studio
+  - name: systemease/openclaw-studio
+    newName: systemease/openclaw-studio
     newTag: 0.1.0-local
 ```
 
@@ -807,7 +807,7 @@ internal service still exposes them).
 - [ ] **Step 4: Update the RuntimeInstance files**
 
 In `instances/hprd/openclaw.yaml` and `instances/prd/openclaw.yaml`: change the `studio`
-component `image` to `repository: ghcr.io/aircompex/openclaw-studio`, `tag: 0.1.0-local`;
+component `image` to `repository: systemease/openclaw-studio`, `tag: 0.1.0-local`;
 remove the `gateway` component's `ingress:` block; remove the gateway `secrets` /
 `OPENCLAW_GATEWAY_TOKEN` requirement note for the gateway component (auth is now `none`).
 Keep the `studio` component's `secrets` (`STUDIO_ACCESS_TOKEN`, `OPENCLAW_GATEWAY_TOKEN`).
@@ -873,4 +873,4 @@ set. Confirm the gate is active.
 
 **Placeholder scan:** No TBD/TODO; every code and YAML step shows complete content; commands have expected output.
 
-**Type consistency:** `loadEnvGatewayDefaults` returns `{ url: string; token: string } | null`, matching `loadLocalGatewayDefaults` and consumed by `resolveGatewayDefaults`. `CONNECT_PROTOCOL` is a single number constant. Image name `ghcr.io/aircompex/openclaw-studio` and tag `0.1.0-local` are consistent across Tasks 5, 6, and 9.
+**Type consistency:** `loadEnvGatewayDefaults` returns `{ url: string; token: string } | null`, matching `loadLocalGatewayDefaults` and consumed by `resolveGatewayDefaults`. `CONNECT_PROTOCOL` is a single number constant. Image name `systemease/openclaw-studio` and tag `0.1.0-local` are consistent across Tasks 5, 6, and 9.
