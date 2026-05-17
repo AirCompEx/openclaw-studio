@@ -74,7 +74,7 @@ describe("control-plane runtime", () => {
               type: "res",
               id: parsed.id,
               ok: true,
-              payload: { type: "hello-ok", protocol: 3 },
+              payload: { type: "hello-ok", protocol: 4 },
             })
           );
           return;
@@ -133,7 +133,7 @@ describe("control-plane runtime", () => {
             type: "res",
             id: parsed.id,
             ok: true,
-            payload: { type: "hello-ok", protocol: 3 },
+            payload: { type: "hello-ok", protocol: 4 },
           })
         );
       });
@@ -213,7 +213,7 @@ describe("control-plane runtime", () => {
             type: "res",
             id: parsed.id,
             ok: true,
-            payload: { type: "hello-ok", protocol: 3 },
+            payload: { type: "hello-ok", protocol: 4 },
           })
         );
       });

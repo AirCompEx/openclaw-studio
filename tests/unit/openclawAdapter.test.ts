@@ -59,7 +59,7 @@ describe("OpenClawGatewayAdapter", () => {
               type: "res",
               id: parsed.id,
               ok: true,
-              payload: { type: "hello-ok", protocol: 3 },
+              payload: { type: "hello-ok", protocol: 4 },
             })
           );
         });
@@ -137,7 +137,7 @@ describe("OpenClawGatewayAdapter", () => {
               type: "res",
               id: parsed.id,
               ok: true,
-              payload: { type: "hello-ok", protocol: 3 },
+              payload: { type: "hello-ok", protocol: 4 },
             })
           );
           return;
@@ -292,7 +292,7 @@ describe("OpenClawGatewayAdapter", () => {
             type: "res",
             id: parsed.id,
             ok: true,
-            payload: { type: "hello-ok", protocol: 3 },
+            payload: { type: "hello-ok", protocol: 4 },
           })
         );
         ws.send(
@@ -399,7 +399,7 @@ describe("OpenClawGatewayAdapter", () => {
               type: "res",
               id: parsed.id,
               ok: true,
-              payload: { type: "hello-ok", protocol: 3 },
+              payload: { type: "hello-ok", protocol: 4 },
             })
           );
           return;
@@ -539,7 +539,7 @@ describe("OpenClawGatewayAdapter", () => {
               type: "res",
               id: parsed.id,
               ok: true,
-              payload: { type: "hello-ok", protocol: 3 },
+              payload: { type: "hello-ok", protocol: 4 },
             })
           );
           return;
