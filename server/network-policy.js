@@ -67,10 +67,13 @@ const isSupabaseAuthConfigured = (env = process.env) => {
   const mode = String(env.STUDIO_AUTH_MODE ?? "").trim().toLowerCase();
   if (mode !== "supabase") return false;
 
-  return Boolean(
-    String(env.NEXT_PUBLIC_SUPABASE_URL ?? "").trim() &&
-      String(env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "").trim()
-  );
+  const url = String(
+    env.SUPABASE_URL ?? env.NEXT_PUBLIC_SUPABASE_URL ?? ""
+  ).trim();
+  const key = String(
+    env.SUPABASE_PUBLISHABLE_KEY ?? env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? ""
+  ).trim();
+  return Boolean(url && key);
 };
 
 const assertPublicHostAllowed = ({ host, studioAccessToken, supabaseAuthConfigured = false }) => {
