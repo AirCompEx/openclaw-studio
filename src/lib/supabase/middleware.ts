@@ -54,6 +54,10 @@ export async function updateSession(request: NextRequest) {
     pathname: request.nextUrl.pathname,
   });
 
+  // These deny/redirect branches only fire when there are no claims — i.e. the
+  // session was not refreshed — so there are no new auth cookies to carry over,
+  // and it is safe to return a fresh response without copying supabaseResponse's
+  // cookies (unlike the allow path below).
   if (decision === "deny-api") {
     return NextResponse.json({ error: "auth_required" }, { status: 401 });
   }
