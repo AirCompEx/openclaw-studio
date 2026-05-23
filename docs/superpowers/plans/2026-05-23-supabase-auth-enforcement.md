@@ -375,12 +375,19 @@ export default async function RootLayout({
 
 (Everything else in the file — `metadata`, fonts, `<body>` — stays unchanged.)
 
-- [ ] **Step 2: Verify typecheck + lint**
+- [ ] **Step 2: Verify typecheck + lint + build**
 
 Run: `npm run typecheck`
 Expected: no errors.
 Run: `npx eslint src/app/layout.tsx`
 Expected: no errors.
+Run: `npm run build`
+Expected: build succeeds. `connection()` in the root layout opts routes into
+dynamic rendering — expected and fine for Studio (already fully dynamic).
+**If the build fails** because of `connection()` in the root layout, fall back to
+adding `export const dynamic = "force-dynamic";` to `src/app/layout.tsx` and
+remove the `await connection()` call (same effect: per-request render so the
+injected env values are runtime, not build-time). Re-run `npm run build`.
 
 - [ ] **Step 3: Manual dev check**
 
