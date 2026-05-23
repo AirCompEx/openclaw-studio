@@ -15,10 +15,11 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization)
      * - favicon.ico
-     * - the Studio API surface (/api/runtime/*, /api/intents/*, /api/studio/*)
-     *   which owns its own auth/error semantics and must not be redirected
      * - common static asset extensions
+     * /api is intentionally included so the proxy can gate API routes;
+     * the auth-gate in lib/supabase/middleware.ts allows /login and /auth/*
+     * through unauthenticated.
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
