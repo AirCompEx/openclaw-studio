@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { resolveServerSupabaseConfig } from "@/lib/supabase/config";
+
 /**
  * Refreshes the Supabase auth session on every matched request and rewrites the
  * auth cookies onto the response. This keeps server-rendered pages and Route
@@ -15,32 +17,29 @@ import { NextResponse, type NextRequest } from "next/server";
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet, headers) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
-          // Supabase sends Cache-Control/Expires/Pragma headers with auth
-          // cookies so a proxy or CDN never caches a response carrying one
-          // user's session token. Forward them onto the response.
-          Object.entries(headers).forEach(([key, value]) =>
-            supabaseResponse.headers.set(key, value)
-          );
-        },
+  const { url, publishableKey } = resolveServerSupabaseConfig();
+  const supabase = createServerClient(url, publishableKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
       },
-    }
-  );
+      setAll(cookiesToSet, headers) {
+        cookiesToSet.forEach(({ name, value }) =>
+          request.cookies.set(name, value)
+        );
+        supabaseResponse = NextResponse.next({ request });
+        cookiesToSet.forEach(({ name, value, options }) =>
+          supabaseResponse.cookies.set(name, value, options)
+        );
+        // Supabase sends Cache-Control/Expires/Pragma headers with auth
+        // cookies so a proxy or CDN never caches a response carrying one
+        // user's session token. Forward them onto the response.
+        Object.entries(headers).forEach(([key, value]) =>
+          supabaseResponse.headers.set(key, value)
+        );
+      },
+    },
+  });
 
   // IMPORTANT: Do not run code between createServerClient and getClaims().
   // getClaims() validates and (if needed) refreshes the session.
