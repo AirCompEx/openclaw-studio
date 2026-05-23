@@ -1,5 +1,3 @@
-// src/lib/supabase/config.ts
-
 export type SupabaseRuntimeConfig = {
   url: string;
   publishableKey: string;

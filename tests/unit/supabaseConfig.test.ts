@@ -1,4 +1,3 @@
-// tests/unit/supabaseConfig.test.ts
 // @vitest-environment node
 
 import { describe, expect, it } from "vitest";
@@ -30,13 +29,27 @@ describe("resolveServerSupabaseConfig", () => {
     });
   });
 
-  it("returns empty strings (trimmed) when nothing set", () => {
+  it("returns empty strings when nothing set", () => {
     expect(resolveServerSupabaseConfig({})).toEqual({
       url: "",
       publishableKey: "",
     });
+  });
+
+  it("trims whitespace from values", () => {
     expect(
       resolveServerSupabaseConfig({ SUPABASE_URL: "  https://x  " }).url
     ).toBe("https://x");
+  });
+
+  it("falls back per-field when only one non-public var is set", () => {
+    const cfg = resolveServerSupabaseConfig({
+      SUPABASE_URL: "https://only-url",
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_pub",
+    });
+    expect(cfg).toEqual({
+      url: "https://only-url",
+      publishableKey: "sb_pub",
+    });
   });
 });
