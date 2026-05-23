@@ -114,7 +114,14 @@ control-plane protocol or how a request/intent is handled upstream.
 - The Docker image's `CMD` is `node server/index.js`. `server/network-policy.js` refuses a
   public bind (`HOST=0.0.0.0`/`::`/non-loopback host) unless browser authentication is
   configured: either legacy `STUDIO_ACCESS_TOKEN`, or `STUDIO_AUTH_MODE=supabase` with
-  `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+  the Supabase config below.
+- When `STUDIO_AUTH_MODE=supabase`, `src/proxy.ts` enforces a valid Supabase session for
+  all pages (redirect to `/login`) and `/api/*` (401 `auth_required`) — any authenticated
+  user is allowed (`src/lib/supabase/auth-gate.ts`). Supabase public config reaches the
+  browser at **runtime** via `window.__STUDIO_PUBLIC_CONFIG__` (injected by
+  `src/app/layout.tsx`), and server code reads non-public `SUPABASE_URL` /
+  `SUPABASE_PUBLISHABLE_KEY` (`src/lib/supabase/config.ts`) because `NEXT_PUBLIC_*` are
+  frozen at build time. Local `npm run dev` without `STUDIO_AUTH_MODE` requires no login.
 - `server/index.js` runs a `better-sqlite3` native-ABI check at startup unless
   `OPENCLAW_SKIP_NATIVE_RUNTIME_VERIFY=1` is set (the production deployment sets it). Dev
   auto-`--repair`s the native module via `predev`; `prestart` is check-only. To fix a

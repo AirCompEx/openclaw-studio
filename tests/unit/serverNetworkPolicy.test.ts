@@ -96,4 +96,26 @@ describe("server network policy", () => {
       } as unknown as NodeJS.ProcessEnv)
     ).toBe(false);
   });
+
+  it("treats non-public SUPABASE_* as configured supabase auth", async () => {
+    const { isSupabaseAuthConfigured } = await import(
+      "../../server/network-policy"
+    );
+    expect(
+      isSupabaseAuthConfigured({
+        STUDIO_AUTH_MODE: "supabase",
+        SUPABASE_URL: "https://x.supabase.co",
+        SUPABASE_PUBLISHABLE_KEY: "sb_publishable_x",
+      } as unknown as NodeJS.ProcessEnv)
+    ).toBe(true);
+  });
+
+  it("is not configured when supabase mode but no url/key", async () => {
+    const { isSupabaseAuthConfigured } = await import(
+      "../../server/network-policy"
+    );
+    expect(isSupabaseAuthConfigured({ STUDIO_AUTH_MODE: "supabase" } as unknown as NodeJS.ProcessEnv)).toBe(
+      false
+    );
+  });
 });

@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Bebas_Neue, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
+import { connection } from "next/server";
 import "./globals.css";
+
+import { resolveServerSupabaseConfig } from "@/lib/supabase/config";
 
 export const metadata: Metadata = {
   title: "OpenClaw Studio",
@@ -25,14 +28,28 @@ const mono = IBM_Plex_Mono({
   subsets: ["latin"],
 });
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Force runtime evaluation of process.env (avoids build-time freezing) so the
+  // browser receives per-environment Supabase config from the running container.
+  await connection();
+  const { url, publishableKey } = resolveServerSupabaseConfig();
+  const publicConfigJson = JSON.stringify({
+    supabaseUrl: url,
+    supabasePublishableKey: publishableKey,
+  }).replace(/</g, "\\u003c");
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.__STUDIO_PUBLIC_CONFIG__=${publicConfigJson};`,
+          }}
+        />
         <script
           dangerouslySetInnerHTML={{
             __html:
