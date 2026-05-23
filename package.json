@@ -1,6 +1,6 @@
 {
   "name": "openclaw-studio",
-  "version": "26.05",
+  "version": "01.00",
   "private": true,
   "engines": {
     "node": ">=20.9.0"

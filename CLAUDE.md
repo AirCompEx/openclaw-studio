@@ -132,15 +132,16 @@ live in the separate `agents-platform` repo, not here.
 
 ## Releasing & versioning
 
-Versions follow a **`YY.MM`** scheme (`package.json` `version`, e.g. `26.05`), enforced by
-`scripts/version-handler.js` (regex `^\d{2}\.\d{2}$`). Cut a release with **`npm run
-release`** from a clean `main`: it pulls `--ff-only`, runs `npm run build`, then tags the
-current version. If that tag already exists it bumps the minor (`.99` rolls to next major
-`.00`), commits `Hotfix [..]`, and pushes branch + tag (rolling back the local tag/commit
-if the push fails).
+Versions are a two-part **`NN.NN` (major.minor)** string in `package.json` `version`,
+starting at `01.00`, enforced by `scripts/version-handler.js` (regex `^\d{2}\.\d{2}$` — two
+digits, dot, two digits; **not** a date). Cut a release with **`npm run release`** from a
+clean `main`: it pulls `--ff-only`, runs `npm run build`, then tags the current version. If
+that tag already exists it bumps the minor (`.99` rolls to the next major `.00`), commits
+`Hotfix [..]`, and pushes branch + tag (rolling back the local tag/commit if the push
+fails).
 
 `docker-build.yml` triggers on the default branch **and** on tags matching `v*` or
-`[0-9][0-9].[0-9][0-9]`, so a `26.05` tag builds and pushes an image tagged `26.05` (the
+`[0-9][0-9].[0-9][0-9]`, so an `01.00` tag builds and pushes an image tagged `01.00` (the
 default branch also publishes `:latest`). The `agents-platform` deployment should pin one
 of these version tags rather than `:latest`.
 
