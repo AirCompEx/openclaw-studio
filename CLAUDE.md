@@ -59,23 +59,64 @@ The fork's deltas:
   `DOCKER_HUB_USERNAME` / `DOCKER_HUB_ACCESS_TOKEN` repo secrets), on pushes to the
   default branch and on `v*` tags — matching the `aircompex` repo's workflow convention.
 
-## Architecture note that matters
+## How the app is wired (read `ARCHITECTURE.md` for the full version)
+
+Next.js 16 (App Router) + React 19, served by a **custom Node server** (`server/index.js`),
+not `next start`. Single runtime architecture with two browser-facing paths plus one
+server-owned upstream link:
+
+1. **Browser → Studio HTTP**: reads via `/api/runtime/*`, mutations via `/api/intents/*`.
+2. **Browser → Studio SSE**: `/api/runtime/stream` (live runtime events + replay).
+3. **Studio server → Gateway**: one server-owned WebSocket opened by the Node process.
 
 Studio connects to the Gateway **entirely server-side**: `openclaw-adapter.ts` is
-imported only by `src/app/api/**/route.ts`. The browser talks only to Studio's Next.js
-API routes; Studio's Node server holds the Gateway WebSocket. So `OPENCLAW_GATEWAY_URL` is
-a server-side, in-cluster URL (e.g. `ws://openclaw-gateway:18789`), **not** a
-browser-facing one — there is no `NEXT_PUBLIC_` gateway URL.
+imported only by `src/app/api/**/route.ts`. The browser never opens a gateway transport.
+So `OPENCLAW_GATEWAY_URL` is a server-side, in-cluster URL (e.g.
+`ws://openclaw-gateway:18789`), **not** browser-facing — there is no `NEXT_PUBLIC_`
+gateway URL.
+
+Key modules:
+
+- **Control plane** (`src/lib/controlplane/`): `openclaw-adapter.ts` (WS lifecycle,
+  handshake, request **allowlist**, reconnect), `runtime.ts` (process-local singleton,
+  subscription fanout), `projection-store.ts` (SQLite projection + replay **outbox** in
+  `runtime.db`). Route handlers bootstrap the runtime through
+  `runtime-route-bootstrap.ts` / `intent-route.ts` and get a deterministic
+  `GATEWAY_UNAVAILABLE` shape when the upstream is down.
+- **Settings** (`src/lib/studio/settings-store.ts`, `src/app/api/studio/route.ts`):
+  persisted to `~/.openclaw/openclaw-studio/settings.json`; gateway token is
+  server-custodied and redacted from API responses; URL/token changes trigger a
+  deterministic reconnect.
+- **UI** (`src/app/page.tsx`, `src/features/agents/**`): top-level wiring of settings
+  load, fleet bootstrap, stream subscription, and history load-more.
+
+Guardrails (from `ARCHITECTURE.md`): don't reintroduce a browser-direct gateway
+transport; don't add `/api/gateway/*` routes (the namespace was re-homed to
+`/api/runtime/*` + `/api/intents/*`); keep the gateway method allowlist explicit in
+`openclaw-adapter.ts`; keep token redaction server-side; keep `runtime.db` migrations
+additive.
+
+## Working with upstream OpenClaw
+
+Per `AGENTS.md`: the OpenClaw Gateway source lives at `~/openclaw`. **Do not modify it** —
+changes belong in this Studio app. Read the Gateway source when you need to understand the
+control-plane protocol or how a request/intent is handled upstream.
 
 ## Build & run
 
 - `npm run dev` — dev server (custom Node server: `server/index.js --dev`).
 - `npm run build` then `npm start` — production (`node server/index.js`).
-- `npm test` — Vitest. `npm run typecheck` — `tsc --noEmit`.
+- `npm run typecheck` — `tsc --noEmit`. `npm run lint` — `eslint .`.
+- `npm test` — Vitest unit tests (jsdom; only `tests/unit/**/*.test.ts`). Run one file
+  with `npx vitest run tests/unit/<name>.test.ts`, or a single case with `-t "<name>"`.
+- `npm run e2e` — Playwright (`playwright.config.ts`); `tests/e2e/**` is excluded from
+  Vitest and runs only here.
 - The Docker image's `CMD` is `node server/index.js`. `server/network-policy.js` refuses a
-  public bind (`HOST=0.0.0.0`) unless `STUDIO_ACCESS_TOKEN` is set.
+  public bind (`HOST=0.0.0.0`/`::`/non-loopback host) unless `STUDIO_ACCESS_TOKEN` is set.
 - `server/index.js` runs a `better-sqlite3` native-ABI check at startup unless
-  `OPENCLAW_SKIP_NATIVE_RUNTIME_VERIFY=1` is set (the production deployment sets it).
+  `OPENCLAW_SKIP_NATIVE_RUNTIME_VERIFY=1` is set (the production deployment sets it). Dev
+  auto-`--repair`s the native module via `predev`; `prestart` is check-only. To fix a
+  `NODE_MODULE_VERSION` mismatch by hand: `npm run verify:native-runtime:repair`.
 
 ## Required GitHub Actions secrets
 
