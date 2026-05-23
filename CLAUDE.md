@@ -130,6 +130,20 @@ Set in **this repo's** Settings → Secrets and variables → Actions, for `dock
 The runtime/deploy secrets (`OPENCLAW_GATEWAY_TOKEN_*`, `OPENCLAW_STUDIO_ACCESS_TOKEN_*`)
 live in the separate `agents-platform` repo, not here.
 
+## Releasing & versioning
+
+Versions follow a **`YY.MM`** scheme (`package.json` `version`, e.g. `26.05`), enforced by
+`scripts/version-handler.js` (regex `^\d{2}\.\d{2}$`). Cut a release with **`npm run
+release`** from a clean `main`: it pulls `--ff-only`, runs `npm run build`, then tags the
+current version. If that tag already exists it bumps the minor (`.99` rolls to next major
+`.00`), commits `Hotfix [..]`, and pushes branch + tag (rolling back the local tag/commit
+if the push fails).
+
+`docker-build.yml` triggers on the default branch **and** on tags matching `v*` or
+`[0-9][0-9].[0-9][0-9]`, so a `26.05` tag builds and pushes an image tagged `26.05` (the
+default branch also publishes `:latest`). The `agents-platform` deployment should pin one
+of these version tags rather than `:latest`.
+
 ## Deployment
 
 Deployed by the separate `agents-platform` repo as the OpenClaw runtime's `studio`

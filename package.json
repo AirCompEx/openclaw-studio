@@ -1,6 +1,6 @@
 {
   "name": "openclaw-studio",
-  "version": "0.1.0",
+  "version": "26.05",
   "private": true,
   "engines": {
     "node": ">=20.9.0"
@@ -24,7 +24,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "e2e": "playwright test",
-    "pw:open:max": "bash scripts/playwright-open-maximized.sh"
+    "pw:open:max": "bash scripts/playwright-open-maximized.sh",
+    "release": "node scripts/version-handler.js"
   },
   "dependencies": {
     "@multiavatar/multiavatar": "github:multiavatar/Multiavatar",
