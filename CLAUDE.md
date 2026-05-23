@@ -140,7 +140,9 @@ digits, dot, two digits; **not** a date). Cut a release with **`npm run release`
 clean `main`: it pulls `--ff-only`, runs `npm run build`, then tags the current version. If
 that tag already exists it bumps the minor (`.99` rolls to the next major `.00`), commits
 `Hotfix [..]`, and pushes branch + tag (rolling back the local tag/commit if the push
-fails).
+fails). Run it through **Bash / git-bash, not PowerShell** — the script shells out to
+`git`, which isn't on PowerShell's PATH in this environment (fails with `'git' is not
+recognized`).
 
 `docker-build.yml` triggers on the default branch **and** on tags matching `v*` or
 `[0-9][0-9].[0-9][0-9]`, so an `01.00` tag builds and pushes an image tagged `01.00` (the
