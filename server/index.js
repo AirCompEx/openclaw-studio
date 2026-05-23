@@ -8,7 +8,11 @@ const next = require("next");
 
 const { createAccessGate } = require("./access-gate");
 const { detectInstallContext, buildStartupGuidance } = require("./install-context");
-const { assertPublicHostAllowed, resolveHosts } = require("./network-policy");
+const {
+  assertPublicHostAllowed,
+  isSupabaseAuthConfigured,
+  resolveHosts,
+} = require("./network-policy");
 
 const resolvePort = () => {
   const raw = process.env.PORT?.trim() || "3000";
@@ -42,6 +46,7 @@ async function main() {
     assertPublicHostAllowed({
       host,
       studioAccessToken: process.env.STUDIO_ACCESS_TOKEN,
+      supabaseAuthConfigured: isSupabaseAuthConfigured(process.env),
     });
   }
 

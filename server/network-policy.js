@@ -63,16 +63,28 @@ const isPublicHost = (host) => {
   return true;
 };
 
-const assertPublicHostAllowed = ({ host, studioAccessToken }) => {
+const isSupabaseAuthConfigured = (env = process.env) => {
+  const mode = String(env.STUDIO_AUTH_MODE ?? "").trim().toLowerCase();
+  if (mode !== "supabase") return false;
+
+  return Boolean(
+    String(env.NEXT_PUBLIC_SUPABASE_URL ?? "").trim() &&
+      String(env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "").trim()
+  );
+};
+
+const assertPublicHostAllowed = ({ host, studioAccessToken, supabaseAuthConfigured = false }) => {
   if (!isPublicHost(host)) return;
 
   const token = String(studioAccessToken ?? "").trim();
   if (token) return;
+  if (supabaseAuthConfigured) return;
 
   const normalized = normalizeHost(host) || String(host ?? "").trim() || "(unknown)";
   throw new Error(
-    `Refusing to bind Studio to public host "${normalized}" without STUDIO_ACCESS_TOKEN. ` +
-      "Set STUDIO_ACCESS_TOKEN or bind HOST to 127.0.0.1/::1/localhost."
+    `Refusing to bind Studio to public host "${normalized}" without browser authentication. ` +
+      "Set STUDIO_ACCESS_TOKEN, configure STUDIO_AUTH_MODE=supabase with Supabase public config, " +
+      "or bind HOST to 127.0.0.1/::1/localhost."
   );
 };
 
@@ -80,5 +92,6 @@ module.exports = {
   resolveHosts,
   resolveHost,
   isPublicHost,
+  isSupabaseAuthConfigured,
   assertPublicHostAllowed,
 };

@@ -112,7 +112,9 @@ control-plane protocol or how a request/intent is handled upstream.
 - `npm run e2e` — Playwright (`playwright.config.ts`); `tests/e2e/**` is excluded from
   Vitest and runs only here.
 - The Docker image's `CMD` is `node server/index.js`. `server/network-policy.js` refuses a
-  public bind (`HOST=0.0.0.0`/`::`/non-loopback host) unless `STUDIO_ACCESS_TOKEN` is set.
+  public bind (`HOST=0.0.0.0`/`::`/non-loopback host) unless browser authentication is
+  configured: either legacy `STUDIO_ACCESS_TOKEN`, or `STUDIO_AUTH_MODE=supabase` with
+  `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 - `server/index.js` runs a `better-sqlite3` native-ABI check at startup unless
   `OPENCLAW_SKIP_NATIVE_RUNTIME_VERIFY=1` is set (the production deployment sets it). Dev
   auto-`--repair`s the native module via `predev`; `prestart` is check-only. To fix a

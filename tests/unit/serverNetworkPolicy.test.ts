@@ -58,4 +58,42 @@ describe("server network policy", () => {
       assertPublicHostAllowed({ host: "0.0.0.0", studioAccessToken: "abc" })
     ).not.toThrow();
   });
+
+  it("allows public bind when Supabase auth mode is configured", async () => {
+    const { assertPublicHostAllowed, isSupabaseAuthConfigured } = await import(
+      "../../server/network-policy"
+    );
+
+    const env = {
+      STUDIO_AUTH_MODE: "supabase",
+      NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_example",
+    } as unknown as NodeJS.ProcessEnv;
+
+    expect(isSupabaseAuthConfigured(env)).toBe(true);
+    expect(() =>
+      assertPublicHostAllowed({
+        host: "0.0.0.0",
+        studioAccessToken: "",
+        supabaseAuthConfigured: isSupabaseAuthConfigured(env),
+      })
+    ).not.toThrow();
+  });
+
+  it("does not treat partial Supabase config as browser auth", async () => {
+    const { isSupabaseAuthConfigured } = await import("../../server/network-policy");
+
+    expect(
+      isSupabaseAuthConfigured({
+        STUDIO_AUTH_MODE: "supabase",
+        NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
+      } as unknown as NodeJS.ProcessEnv)
+    ).toBe(false);
+    expect(
+      isSupabaseAuthConfigured({
+        NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_example",
+      } as unknown as NodeJS.ProcessEnv)
+    ).toBe(false);
+  });
 });
