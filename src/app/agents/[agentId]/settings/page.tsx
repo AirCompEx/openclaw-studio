@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { buildSettingsRouteHref } from "@/features/agents/operations/settingsRouteWorkflow";
+import { resolveServerStudioBasePath, withStudioBasePath } from "@/lib/studio/base-path";
 
 export default async function AgentSettingsPage({
   params,
@@ -9,8 +10,9 @@ export default async function AgentSettingsPage({
 }) {
   const resolvedParams = await params;
   const agentId = (resolvedParams?.agentId ?? "").trim();
+  const studioBasePath = resolveServerStudioBasePath();
   if (!agentId) {
-    redirect("/");
+    redirect(withStudioBasePath("/", studioBasePath));
   }
-  redirect(buildSettingsRouteHref(agentId));
+  redirect(buildSettingsRouteHref(agentId, studioBasePath));
 }

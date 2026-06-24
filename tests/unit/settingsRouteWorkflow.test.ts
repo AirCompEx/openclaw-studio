@@ -35,6 +35,12 @@ describe("settingsRouteWorkflow", () => {
     );
   });
 
+  it("builds settings route href under a studio base path", () => {
+    expect(buildSettingsRouteHref("main", "/runtimes/instance-1")).toBe(
+      `/runtimes/instance-1/?${SETTINGS_ROUTE_AGENT_ID_QUERY_PARAM}=main`
+    );
+  });
+
   it("parses settings route agent id from query param", () => {
     expect(parseSettingsRouteAgentIdFromQueryParam("agent-1")).toBe("agent-1");
     expect(parseSettingsRouteAgentIdFromQueryParam("agent%201")).toBe("agent 1");
@@ -65,10 +71,11 @@ describe("settingsRouteWorkflow", () => {
         activeTab: "personality",
         personalityHasUnsavedChanges: true,
         discardConfirmed: true,
+        studioBasePath: "/runtimes/instance-1",
       })
     ).toEqual([
       { kind: "set-personality-dirty", value: false },
-      { kind: "push", href: "/" },
+      { kind: "push", href: "/runtimes/instance-1/" },
     ]);
   });
 
@@ -168,8 +175,9 @@ describe("settingsRouteWorkflow", () => {
         selectedAgentId: null,
         hasRouteAgent: false,
         currentInspectSidebar: null,
+        studioBasePath: "/runtimes/instance-1",
       })
-    ).toEqual([{ kind: "replace", href: "/" }]);
+    ).toEqual([{ kind: "replace", href: "/runtimes/instance-1/" }]);
   });
 
   it("plans non-route selection reconciliation", () => {
@@ -199,6 +207,7 @@ describe("settingsRouteWorkflow", () => {
         agentId: "agent 2",
         currentInspectSidebar: { agentId: "agent-1", tab: "advanced" },
         focusedAgentId: "agent-1",
+        studioBasePath: "/runtimes/instance-1",
       })
     ).toEqual([
       { kind: "flush-pending-draft", agentId: "agent-1" },
@@ -208,7 +217,7 @@ describe("settingsRouteWorkflow", () => {
         value: { agentId: "agent 2", tab: "advanced" },
       },
       { kind: "set-mobile-pane-chat" },
-      { kind: "push", href: "/?settingsAgentId=agent%202" },
+      { kind: "push", href: "/runtimes/instance-1/?settingsAgentId=agent%202" },
     ]);
 
     expect(

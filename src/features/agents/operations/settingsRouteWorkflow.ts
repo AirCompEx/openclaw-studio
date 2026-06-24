@@ -1,3 +1,5 @@
+import { withStudioBasePath } from "@/lib/studio/base-path";
+
 export type SettingsRouteTab =
   | "personality"
   | "capabilities"
@@ -43,12 +45,15 @@ export const parseSettingsRouteAgentIdFromQueryParam = (value: string | null | u
   }
 };
 
-export const buildSettingsRouteHref = (agentId: string): string => {
+export const buildSettingsRouteHref = (agentId: string, studioBasePath = ""): string => {
   const resolved = agentId.trim();
   if (!resolved) {
     throw new Error("Cannot build settings route href: agent id is empty.");
   }
-  return `/?${SETTINGS_ROUTE_AGENT_ID_QUERY_PARAM}=${encodeURIComponent(resolved)}`;
+  return withStudioBasePath(
+    `/?${SETTINGS_ROUTE_AGENT_ID_QUERY_PARAM}=${encodeURIComponent(resolved)}`,
+    studioBasePath
+  );
 };
 
 export const shouldConfirmDiscardPersonalityChanges = (params: {
@@ -66,6 +71,7 @@ export const planBackToChatCommands = (input: {
   activeTab: SettingsRouteTab;
   personalityHasUnsavedChanges: boolean;
   discardConfirmed: boolean;
+  studioBasePath?: string;
 }): SettingsRouteNavCommand[] => {
   if (
     shouldConfirmDiscardPersonalityChanges({
@@ -80,7 +86,7 @@ export const planBackToChatCommands = (input: {
 
   return [
     { kind: "set-personality-dirty", value: false },
-    { kind: "push", href: "/" },
+    { kind: "push", href: withStudioBasePath("/", input.studioBasePath) },
   ];
 };
 
@@ -127,6 +133,7 @@ export const planOpenSettingsRouteCommands = (input: {
   agentId: string;
   currentInspectSidebar: InspectSidebarState;
   focusedAgentId: string | null;
+  studioBasePath?: string;
 }): SettingsRouteNavCommand[] => {
   const resolvedAgentId = input.agentId.trim();
   if (!resolvedAgentId) return [];
@@ -154,7 +161,7 @@ export const planOpenSettingsRouteCommands = (input: {
 
   commands.push(
     { kind: "set-mobile-pane-chat" },
-    { kind: "push", href: buildSettingsRouteHref(resolvedAgentId) }
+    { kind: "push", href: buildSettingsRouteHref(resolvedAgentId, input.studioBasePath) }
   );
 
   return commands;
@@ -201,6 +208,7 @@ export const planSettingsRouteSyncCommands = (input: {
   selectedAgentId: string | null;
   hasRouteAgent: boolean;
   currentInspectSidebar: InspectSidebarState;
+  studioBasePath?: string;
 }): SettingsRouteNavCommand[] => {
   const commands: SettingsRouteNavCommand[] = [];
   const routeAgentId = (input.settingsRouteAgentId ?? "").trim();
@@ -227,7 +235,7 @@ export const planSettingsRouteSyncCommands = (input: {
     input.agentsLoadedOnce &&
     !input.hasRouteAgent
   ) {
-    commands.push({ kind: "replace", href: "/" });
+    commands.push({ kind: "replace", href: withStudioBasePath("/", input.studioBasePath) });
   }
 
   return commands;

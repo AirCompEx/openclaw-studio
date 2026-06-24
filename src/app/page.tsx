@@ -116,6 +116,7 @@ import {
   listDomainCronJobs,
 } from "@/lib/controlplane/domain-runtime-client";
 import { useRuntimeEventStream } from "@/features/agents/state/useRuntimeEventStream";
+import { resolveClientStudioBasePath } from "@/lib/studio/base-path";
 const PENDING_EXEC_APPROVAL_PRUNE_GRACE_MS = 500;
 
 type MobilePane = "fleet" | "chat";
@@ -205,6 +206,7 @@ const AgentStudioPage = () => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const studioBasePath = useMemo(() => resolveClientStudioBasePath(), []);
   const settingsRouteAgentId = useMemo(
     () =>
       parseSettingsRouteAgentIdFromQueryParam(
@@ -922,6 +924,7 @@ const AgentStudioPage = () => {
     activeTab: effectiveSettingsTab,
     inspectSidebar,
     agents,
+    studioBasePath,
     flushPendingDraft,
     dispatchSelectAgent: (agentId) => {
       dispatch({ type: "selectAgent", agentId });

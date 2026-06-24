@@ -1,9 +1,6 @@
 import { createBrowserClient } from "@supabase/ssr";
 
-type InjectedPublicConfig = {
-  supabaseUrl?: string;
-  supabasePublishableKey?: string;
-};
+import { readStudioPublicConfig } from "@/lib/studio/base-path";
 
 /**
  * Reads the Supabase public config in the browser. In production the
@@ -13,11 +10,7 @@ type InjectedPublicConfig = {
  * `NEXT_PUBLIC_*` fallback keeps local `npm run dev` working.
  */
 function readBrowserSupabaseConfig(): { url: string; key: string } {
-  const injected =
-    (typeof window !== "undefined"
-      ? (window as unknown as { __STUDIO_PUBLIC_CONFIG__?: InjectedPublicConfig })
-          .__STUDIO_PUBLIC_CONFIG__
-      : undefined) ?? {};
+  const injected = readStudioPublicConfig();
 
   const url = (
     injected.supabaseUrl ??

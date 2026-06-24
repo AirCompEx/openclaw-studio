@@ -6,6 +6,7 @@ import {
   resolveAuthDecision,
   studioAuthEnforced,
 } from "@/lib/supabase/auth-gate";
+import { resolveServerStudioBasePath, withStudioBasePath } from "@/lib/studio/base-path";
 
 /**
  * Refreshes the Supabase auth session on every matched request and rewrites the
@@ -63,7 +64,7 @@ export async function updateSession(request: NextRequest) {
   }
   if (decision === "redirect-login") {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = withStudioBasePath("/login", resolveServerStudioBasePath());
     return NextResponse.redirect(url);
   }
 

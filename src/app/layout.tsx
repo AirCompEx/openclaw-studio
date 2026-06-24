@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import "./globals.css";
 
 import { resolveServerSupabaseConfig } from "@/lib/supabase/config";
+import { resolveServerStudioBasePath } from "@/lib/studio/base-path";
 
 export const metadata: Metadata = {
   title: "OpenClaw Studio",
@@ -37,9 +38,11 @@ export default async function RootLayout({
   // browser receives per-environment Supabase config from the running container.
   await connection();
   const { url, publishableKey } = resolveServerSupabaseConfig();
+  const studioBasePath = resolveServerStudioBasePath();
   const publicConfigJson = JSON.stringify({
     supabaseUrl: url,
     supabasePublishableKey: publishableKey,
+    studioBasePath,
   }).replace(/</g, "\\u003c");
 
   return (

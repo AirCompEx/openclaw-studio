@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+import { resolveServerStudioBasePath, withStudioBasePath } from "@/lib/studio/base-path";
 
 /**
  * OAuth (and PKCE) callback. Supabase redirects here with a `code` after the
@@ -15,6 +16,7 @@ export async function GET(request: Request) {
   if (!next.startsWith("/")) {
     next = "/";
   }
+  next = withStudioBasePath(next, resolveServerStudioBasePath());
 
   if (code) {
     const supabase = await createClient();
@@ -32,5 +34,7 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.redirect(`${origin}/login?error=oauth`);
+  return NextResponse.redirect(
+    `${origin}${withStudioBasePath("/login?error=oauth", resolveServerStudioBasePath())}`
+  );
 }

@@ -247,6 +247,47 @@ describe("useSettingsRouteController", () => {
     ]);
   });
 
+  it("keeps open-settings navigation under the studio base path", () => {
+    const order: string[] = [];
+    const ctx = renderController(
+      {
+        focusedAgentId: "focused-agent",
+        inspectSidebar: null,
+        studioBasePath: "/runtimes/instance-1",
+      },
+      {
+        flushPendingDraft: () => {
+          order.push("flush");
+        },
+        dispatchSelectAgent: () => {
+          order.push("select");
+        },
+        setInspectSidebar: () => {
+          order.push("inspect");
+        },
+        setMobilePaneChat: () => {
+          order.push("pane");
+        },
+        push: (href) => {
+          order.push(`push:${href}`);
+        },
+      }
+    );
+    order.length = 0;
+
+    act(() => {
+      ctx.getValue().handleOpenAgentSettingsRoute("agent 2");
+    });
+
+    expect(order).toEqual([
+      "flush",
+      "select",
+      "inspect",
+      "pane",
+      "push:/runtimes/instance-1/?settingsAgentId=agent%202",
+    ]);
+  });
+
   it("keeps fleet-select behavior parity", () => {
     const ctx = renderController({
       focusedAgentId: "focused-agent",

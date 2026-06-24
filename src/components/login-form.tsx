@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
+import { resolveClientStudioBasePath, withStudioBasePath } from "@/lib/studio/base-path";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,7 +48,7 @@ export function LoginForm({
       setError(error.message);
       return;
     }
-    router.push("/");
+    router.push(withStudioBasePath("/", resolveClientStudioBasePath()));
     router.refresh();
   }
 
@@ -58,7 +59,10 @@ export function LoginForm({
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}${withStudioBasePath(
+          "/auth/callback",
+          resolveClientStudioBasePath()
+        )}`,
       },
     });
     if (error) {

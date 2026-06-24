@@ -24,6 +24,7 @@ export type UseSettingsRouteControllerParams = {
   activeTab: SettingsRouteTab;
   inspectSidebar: InspectSidebarState;
   agents: Array<{ agentId: string }>;
+  studioBasePath?: string;
   flushPendingDraft: (agentId: string | null) => void;
   dispatchSelectAgent: (agentId: string | null) => void;
   setInspectSidebar: (
@@ -101,6 +102,7 @@ export function useSettingsRouteController(
     activeTab,
     inspectSidebar,
     agents,
+    studioBasePath,
     flushPendingDraft,
     dispatchSelectAgent,
     setInspectSidebar,
@@ -146,9 +148,17 @@ export function useSettingsRouteController(
       activeTab,
       personalityHasUnsavedChanges,
       discardConfirmed,
+      studioBasePath,
     });
     applyCommands(commands);
-  }, [activeTab, applyCommands, confirmDiscard, personalityHasUnsavedChanges, settingsRouteActive]);
+  }, [
+    activeTab,
+    applyCommands,
+    confirmDiscard,
+    personalityHasUnsavedChanges,
+    settingsRouteActive,
+    studioBasePath,
+  ]);
 
   const handleSettingsRouteTabChange = useCallback(
     (nextTab: SettingsRouteTab) => {
@@ -189,10 +199,11 @@ export function useSettingsRouteController(
         agentId,
         currentInspectSidebar: inspectSidebar,
         focusedAgentId,
+        studioBasePath,
       });
       applyCommands(commands);
     },
-    [applyCommands, focusedAgentId, inspectSidebar]
+    [applyCommands, focusedAgentId, inspectSidebar, studioBasePath]
   );
 
   const handleFleetSelectAgent = useCallback(
@@ -221,6 +232,7 @@ export function useSettingsRouteController(
       selectedAgentId,
       hasRouteAgent,
       currentInspectSidebar: inspectSidebar,
+      studioBasePath,
     });
 
     applyCommands(commands);
@@ -233,6 +245,7 @@ export function useSettingsRouteController(
     settingsRouteActive,
     settingsRouteAgentId,
     status,
+    studioBasePath,
   ]);
 
   useEffect(() => {
