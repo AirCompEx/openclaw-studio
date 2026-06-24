@@ -125,6 +125,7 @@ Paths and key settings:
 - Default gateway URL: `ws://localhost:18789` (override via Studio Settings or `NEXT_PUBLIC_GATEWAY_URL`)
 - Domain API mode: always enabled. Studio runs on the server-owned control-plane architecture.
 - `STUDIO_ACCESS_TOKEN`: required when binding Studio to a public host (`HOST=0.0.0.0`, `HOST=::`, or non-loopback hostnames/IPs); optional for loopback-only binds (`127.0.0.1`, `::1`, `localhost`)
+- `STUDIO_BASE_PATH`: optional managed-platform base path. AirCompEx app-driven runtimes set it to `/runtimes/<runtime-instance-id>` so Studio runs behind the `agent-platform-app` runtime gateway.
 
 Startup guard behavior:
 - `npm run dev` and `npm run dev:turbo` run `verify:native-runtime:repair` before server startup.
@@ -145,6 +146,10 @@ See `docs/pi-chat-streaming.md` for how Studio streams runtime events over domai
 ## Permissions + sandboxing
 
 See `docs/permissions-sandboxing.md` for how agent creation choices (tool policy, sandbox config, exec approvals) flow from Studio into the OpenClaw Gateway and how upstream OpenClaw enforces them at runtime (workspaces, sandbox mounts, tool availability, and exec approval prompts).
+
+## AirCompEx managed runtime integration
+
+See `docs/aircompex-runtime-integration.md` for the AirCompEx-specific contract between this fork, `agent-platform-app` and `agents-platform`.
 
 ## Color system
 
