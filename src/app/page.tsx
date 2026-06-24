@@ -207,6 +207,26 @@ const AgentStudioPage = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const studioBasePath = useMemo(() => resolveClientStudioBasePath(), []);
+  const pushStudioHref = useCallback(
+    (href: string) => {
+      if (studioBasePath && (href === studioBasePath || href.startsWith(`${studioBasePath}/`))) {
+        window.history.pushState(null, "", href);
+        return;
+      }
+      router.push(href);
+    },
+    [router, studioBasePath]
+  );
+  const replaceStudioHref = useCallback(
+    (href: string) => {
+      if (studioBasePath && (href === studioBasePath || href.startsWith(`${studioBasePath}/`))) {
+        window.history.replaceState(null, "", href);
+        return;
+      }
+      router.replace(href);
+    },
+    [router, studioBasePath]
+  );
   const settingsRouteAgentId = useMemo(
     () =>
       parseSettingsRouteAgentIdFromQueryParam(
@@ -934,8 +954,8 @@ const AgentStudioPage = () => {
       setMobilePane("chat");
     },
     setPersonalityHasUnsavedChanges,
-    push: router.push,
-    replace: router.replace,
+    push: pushStudioHref,
+    replace: replaceStudioHref,
     confirmDiscard: () => window.confirm("Discard changes?"),
   });
   const handleOpenCreateAgentModal = useCallback(() => {
