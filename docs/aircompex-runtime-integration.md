@@ -66,6 +66,16 @@ Those responsibilities belong to `agent-platform-app` and `agents-platform`.
 
 `agent-platform-app` must authorize the user before proxying to the internal Studio service.
 
+`agent-platform-app` may also call Studio intent APIs from its provisioning worker to bootstrap
+an OpenClaw runtime after Kubernetes and ArgoCD report the runtime ready. This internal path is
+limited to `/api/intents/*` and requires a bearer token. The token comes from the same runtime
+secret as `OPENCLAW_GATEWAY_TOKEN`, or from `STUDIO_INTERNAL_API_TOKEN` if that explicit value is
+provided.
+
+This internal worker path exists so bootstrap templates can create agents and write allowlisted
+OpenClaw files through Studio/Gateway domain operations. It must not be expanded into a broad
+unauthenticated API bypass.
+
 The Studio image must keep working both ways:
 
 - standalone at `/` for local/upstream-like usage,
@@ -80,4 +90,6 @@ Before promoting a new Studio image for managed platform use, validate:
 - base-path unit tests,
 - login and Google OAuth through the platform gateway,
 - settings button navigation under `/runtimes/<runtime-instance-id>/`,
+- worker bearer access to `/api/intents/agent-create` and `/api/intents/agent-file-set`,
+- no bearer bypass for non-intent APIs such as `/api/runtime/*`,
 - direct unprefixed settings navigation does not break the managed route.

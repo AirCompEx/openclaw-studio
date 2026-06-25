@@ -3,7 +3,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  hasValidStudioInternalApiToken,
   resolveAuthDecision,
+  studioInternalApiToken,
   studioAuthEnforced,
 } from "@/lib/supabase/auth-gate";
 
@@ -17,6 +19,37 @@ describe("studioAuthEnforced", () => {
     expect(studioAuthEnforced({})).toBe(false);
     expect(studioAuthEnforced({ STUDIO_AUTH_MODE: "" })).toBe(false);
     expect(studioAuthEnforced({ STUDIO_AUTH_MODE: "token" })).toBe(false);
+  });
+});
+
+describe("studioInternalApiToken", () => {
+  it("prefers STUDIO_INTERNAL_API_TOKEN and falls back to OPENCLAW_GATEWAY_TOKEN", () => {
+    expect(
+      studioInternalApiToken({
+        STUDIO_INTERNAL_API_TOKEN: " internal-token ",
+        OPENCLAW_GATEWAY_TOKEN: "gateway-token",
+      })
+    ).toBe("internal-token");
+    expect(
+      studioInternalApiToken({
+        OPENCLAW_GATEWAY_TOKEN: " gateway-token ",
+      })
+    ).toBe("gateway-token");
+  });
+
+  it("validates bearer tokens", () => {
+    expect(
+      hasValidStudioInternalApiToken({
+        authorizationHeader: "Bearer secret",
+        env: { STUDIO_INTERNAL_API_TOKEN: "secret" },
+      })
+    ).toBe(true);
+    expect(
+      hasValidStudioInternalApiToken({
+        authorizationHeader: "Bearer wrong",
+        env: { STUDIO_INTERNAL_API_TOKEN: "secret" },
+      })
+    ).toBe(false);
   });
 });
 
@@ -62,6 +95,25 @@ describe("resolveAuthDecision", () => {
       resolveAuthDecision({
         enforce: true,
         hasClaims: false,
+        pathname: "/api/runtime/fleet",
+      })
+    ).toBe("deny-api");
+  });
+
+  it("allows internal bearer access only for intent APIs", () => {
+    expect(
+      resolveAuthDecision({
+        enforce: true,
+        hasClaims: false,
+        hasInternalApiToken: true,
+        pathname: "/api/intents/agent-create",
+      })
+    ).toBe("allow");
+    expect(
+      resolveAuthDecision({
+        enforce: true,
+        hasClaims: false,
+        hasInternalApiToken: true,
         pathname: "/api/runtime/fleet",
       })
     ).toBe("deny-api");

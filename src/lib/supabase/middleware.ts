@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { resolveServerSupabaseConfig } from "@/lib/supabase/config";
 import {
+  hasValidStudioInternalApiToken,
   resolveAuthDecision,
   studioAuthEnforced,
 } from "@/lib/supabase/auth-gate";
@@ -52,6 +53,9 @@ export async function updateSession(request: NextRequest) {
   const decision = resolveAuthDecision({
     enforce: studioAuthEnforced(),
     hasClaims: Boolean(claims),
+    hasInternalApiToken: hasValidStudioInternalApiToken({
+      authorizationHeader: request.headers.get("authorization"),
+    }),
     pathname: request.nextUrl.pathname,
   });
 
