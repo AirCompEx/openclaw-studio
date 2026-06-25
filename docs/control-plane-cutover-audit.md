@@ -1,7 +1,13 @@
 # Control Plane Cutover Audit
 
 Date: 2026-03-02
-Status: fresh-eyes first-principles inventory (pass 2)
+Status: historical audit / not the current AirCompEx runtime integration contract
+
+Current AirCompEx integration contract:
+
+- [aircompex-runtime-integration.md](./aircompex-runtime-integration.md)
+
+This audit remains useful for understanding legacy Studio browser/gateway coupling. It should not be read as the current deployment contract for `agent-platform-app` runtime gateway integration.
 
 ## Objective
 
