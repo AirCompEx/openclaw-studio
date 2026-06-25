@@ -9,7 +9,7 @@ The fork must remain close to upstream OpenClaw Studio, but it also has to run a
 As of 2026-06-24:
 
 - upstream `grp06/openclaw-studio` changes have been merged into the AirCompEx fork,
-- the deployed AirCompEx image is `systemease/openclaw-studio:9f66e73`,
+- the deployed AirCompEx image is `systemease/openclaw-studio:97b8814`,
 - `agents-platform` deploys this image inside the OpenClaw runtime Pod,
 - `agent-platform-app` exposes Studio through the central runtime gateway:
 
