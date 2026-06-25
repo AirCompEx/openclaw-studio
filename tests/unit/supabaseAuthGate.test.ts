@@ -88,6 +88,22 @@ describe("resolveAuthDecision", () => {
         pathname: "/auth/callback",
       })
     ).toBe("allow");
+
+    expect(
+      resolveAuthDecision({
+        enforce: true,
+        hasClaims: false,
+        pathname: "/control",
+      })
+    ).toBe("allow");
+
+    expect(
+      resolveAuthDecision({
+        enforce: true,
+        hasClaims: false,
+        pathname: "/control/assets/app.js",
+      })
+    ).toBe("allow");
   });
 
   it("401s unauthenticated API requests", () => {

@@ -38,6 +38,7 @@ export function resolveAuthDecision(args: {
   if (hasClaims) return "allow";
   if (hasInternalApiToken && pathname.startsWith("/api/intents/")) return "allow";
   if (pathname === "/login" || pathname.startsWith("/auth/")) return "allow";
+  if (pathname === "/control" || pathname.startsWith("/control/")) return "allow";
   if (pathname.startsWith("/api/")) return "deny-api";
   return "redirect-login";
 }
