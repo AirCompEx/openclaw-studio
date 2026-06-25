@@ -141,9 +141,11 @@ const normalizeControlUiBasePath = (basePath: string): string => {
 const resolveControlUiUrl = (params: {
   gatewayUrl: string;
   configSnapshot: GatewayModelPolicySnapshot | null;
+  studioBasePath?: string;
 }): string | null => {
   const rawGatewayUrl = params.gatewayUrl.trim();
-  if (!rawGatewayUrl) return null;
+  const studioBasePath = params.studioBasePath?.trim() ?? "";
+  if (!rawGatewayUrl && !studioBasePath) return null;
 
   let controlUiEnabled = true;
   let controlUiBasePath = "";
@@ -164,6 +166,10 @@ const resolveControlUiUrl = (params: {
   }
 
   if (!controlUiEnabled) return null;
+
+  if (studioBasePath) {
+    return `${studioBasePath}/control/`;
+  }
 
   try {
     const url = new URL(rawGatewayUrl);
@@ -442,7 +448,12 @@ const AgentStudioPage = () => {
   const hasRunningAgents = runningAgentCount > 0;
   const isLocalGateway = useMemo(() => isLocalGatewayUrl(gatewayUrl), [gatewayUrl]);
   const controlUiUrl = useMemo(
-    () => resolveControlUiUrl({ gatewayUrl, configSnapshot: gatewayConfigSnapshot }),
+    () =>
+      resolveControlUiUrl({
+        gatewayUrl,
+        configSnapshot: gatewayConfigSnapshot,
+        studioBasePath: resolveClientStudioBasePath(),
+      }),
     [gatewayConfigSnapshot, gatewayUrl]
   );
   const settingsHeaderModel = (inspectSidebarAgent?.model ?? "").trim() || "Default";

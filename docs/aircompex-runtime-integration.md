@@ -66,6 +66,17 @@ Those responsibilities belong to `agent-platform-app` and `agents-platform`.
 
 `agent-platform-app` must authorize the user before proxying to the internal Studio service.
 
+When Studio runs under `STUDIO_BASE_PATH`, the Advanced "Open Full Control UI"
+link must also stay under the platform runtime gateway:
+
+```text
+/runtimes/<runtime-instance-id>/control/
+```
+
+It must not send the browser to the internal Gateway loopback URL such as
+`http://127.0.0.1:18789/`. That loopback address is only valid inside the
+runtime Pod.
+
 `agent-platform-app` may also call Studio intent APIs from its provisioning worker to bootstrap
 an OpenClaw runtime after Kubernetes and ArgoCD report the runtime ready. This internal path is
 limited to `/api/intents/*` and requires a bearer token. The token comes from the same runtime
@@ -90,6 +101,7 @@ Before promoting a new Studio image for managed platform use, validate:
 - base-path unit tests,
 - login and Google OAuth through the platform gateway,
 - settings button navigation under `/runtimes/<runtime-instance-id>/`,
+- Advanced Control UI navigation under `/runtimes/<runtime-instance-id>/control/`,
 - worker bearer access to `/api/intents/agent-create` and `/api/intents/agent-file-set`,
 - no bearer bypass for non-intent APIs such as `/api/runtime/*`,
 - direct unprefixed settings navigation does not break the managed route.
