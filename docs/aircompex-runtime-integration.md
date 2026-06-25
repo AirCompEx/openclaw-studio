@@ -77,6 +77,19 @@ It must not send the browser to the internal Gateway loopback URL such as
 `http://127.0.0.1:18789/`. That loopback address is only valid inside the
 runtime Pod.
 
+Studio owns the managed `/control/*` proxy route. In managed mode, the request
+flow is:
+
+```text
+browser
+  -> agent-platform-app /runtimes/<runtime-instance-id>/control/*
+  -> Studio /control/*
+  -> http://127.0.0.1:18789/*
+```
+
+This keeps the Control UI available for authorized platform users without
+exposing the Gateway Control UI as a direct Kubernetes Service port.
+
 `agent-platform-app` may also call Studio intent APIs from its provisioning worker to bootstrap
 an OpenClaw runtime after Kubernetes and ArgoCD report the runtime ready. This internal path is
 limited to `/api/intents/*` and requires a bearer token. The token comes from the same runtime
